@@ -1,13 +1,17 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from collections import defaultdict
-from functools import reduce
-import math, sys
+import math, sys, functools
+gcd = lambda l: functools.reduce(math.gcd, l)
 
-def find_gcd(list):
-    x = reduce(math.gcd, list)
-    return x
+# data storage
+cars = []
+streets = dict()
+intersections = defaultdict(lambda: Intersection())
+schedules = []
 
 
+
+# type definitions
 @dataclass
 class Street:
     start: int
@@ -20,44 +24,60 @@ class Car:
     i: int
     path: list
 
-    def path_len(self, streets):
+    def path_total_time(self):
         count = 0
         for p in self.path:
             count += streets[p].time
         return count
 
+@dataclass
+class Intersection:
+    cars_per_inbound: defaultdict = field(default_factory = lambda: defaultdict(int))
 
+
+
+# output type definitions
+@dataclass
+class Schedule:
+    intersection: int
+    schedule: list
+
+
+
+# data load from input
 [ duration, intersections_count, street_count, car_count, bonus ] = [ int(x) for x in input().split() ]
 
-streets = dict()
 for _ in range(street_count):
     [ s, e, n, l ] = input().split()
     streets[n] = (Street(int(s), int(e), n, int(l)))
 
-cars = []
 for i in range(car_count):
     path = input().split()[1:]
     cars.append(Car(i, path))
 
-sorted_cars = sorted(cars, key=lambda c: c.path_len(streets))
-cars = sorted_cars[:math.floor(len(sorted_cars)*0.65)]
 
-@dataclass
-class Intersection:
-    counts: dict
-    def count(self, street):
-        if street not in self.counts:
-            self.counts[street] = 1
-        else:
-            self.counts[street] += 1
 
-intersections = dict()
+# pre processing
+# sorted_cars = sorted(cars, key=lambda c: c.path_total_time())
+# cars = sorted_cars[:math.floor(len(sorted_cars)*0.65)]
+
 for car in cars:
     for street in car.path:
         end = streets[street].end
-        if end not in intersections:
-            intersections[end] = Intersection(dict())
-        intersections[end].count(street)
+        intersections[end].cars_per_inbound[street] += 1
+        start = streets[street].start
+        intersections[start].cars_per_inbound[street] += 1
+
+
+
+# processing
+for i, intersection in intersections.items():
+    schedule = []
+    streets = sorted(intersection.cars_per_inbound.keys(), key=lambda x: intersection.cars_per_inbound[x])
+    for (i, street) in enumerate(streets):
+        schedule.append((street, int(i + 1)))
+    schedules.append(Schedule(i, schedule))
+
 
 # print(len(intersections))
 # for i, intersection in intersections.items():
@@ -65,7 +85,7 @@ for car in cars:
 #     print(len(intersection.counts.items()))
 #     street_names = list(intersection.counts.keys())
 #     street_values = [ streets[k].time for k in street_names ]
-#     this_gcd = find_gcd(street_values)
+#     this_gcd = gcd(street_values)
 #     street_values = [ v/this_gcd for v in street_values ]
 #     biggest_time = max(street_values)
 #     for i in range(len(street_names)):
@@ -79,19 +99,21 @@ for car in cars:
 # for i, intersection in intersections.items():
 #     print(i)
 #     print(len(intersection.counts.items()))
-#     this_gcd = find_gcd(intersection.counts.values())
+#     this_gcd = gcd(intersection.counts.values())
 #     street_names = list(intersection.counts.keys())
 #     street_names = sorted(street_names, key=lambda x: first_streets[x], reverse=True)
 #     for street in street_names:
 #         print(f"{street} {int(intersection.counts[street]/this_gcd)}")
 
-print(len(intersections.items()))
-for i, intersection in intersections.items():
-    print(i)
-    print(len(intersection.counts.items()))
-    streets = sorted(intersection.counts.keys(), key=lambda x: intersection.counts[x])
-    for (i, street) in enumerate(streets):
-        print(f"{street} {int(i + 1)}")
 
 
+
+
+# output
+print(len(schedules))
+for schedule in schedules:
+    print(schedule.intersection)
+    print(len(schedule.schedule))
+    for (street, time) in schedule.schedule:
+        print(f"{street} {time}")
 
