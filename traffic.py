@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from collections import defaultdict
+import math
 import sys
 
 @dataclass
@@ -14,6 +15,13 @@ class Car:
     i: int
     path: list
 
+    def path_len(self, streets):
+        count = 0
+        for p in self.path:
+            count += streets[p].time
+        return count
+
+
 [ duration, intersections_count, street_count, car_count, bonus ] = [ int(x) for x in input().split() ]
 
 streets = dict()
@@ -25,6 +33,9 @@ cars = []
 for i in range(car_count):
     path = input().split()[1:]
     cars.append(Car(i, path))
+
+sorted_cars = sorted(cars, key=lambda c: c.path_len(streets))
+cars = sorted_cars[:math.floor(len(sorted_cars)*0.65)]
 
 @dataclass
 class Intersection:
@@ -61,27 +72,27 @@ def find_gcd(list):
 #     for i in range(len(street_names)):
 #         print(f"{street_names[i]} {int(max(biggest_time//street_values[i], 1))}")
 
-first_streets = defaultdict(int)
-for car in cars:
-    first_streets[car.path[0]] += 1
+# first_streets = defaultdict(int)
+# for car in cars:
+#     first_streets[car.path[0]] += 1
 
-print(len(intersections))
-for i, intersection in intersections.items():
-    print(i)
-    print(len(intersection.counts.items()))
-    this_gcd = find_gcd(intersection.counts.values())
-    street_names = list(intersection.counts.keys())
-    street_names = sorted(street_names, key=lambda x: first_streets[x], reverse=True)
-    for street in street_names:
-        print(f"{street} {4}")
-
-# print(len(intersections.items()))
+# print(len(intersections))
 # for i, intersection in intersections.items():
 #     print(i)
 #     print(len(intersection.counts.items()))
-#     streets = sorted(intersection.counts.keys(), key=lambda x: intersection.counts[x])
-#     for (i, street) in enumerate(streets):
-#         print(f"{street} {2}")
+#     this_gcd = find_gcd(intersection.counts.values())
+#     street_names = list(intersection.counts.keys())
+#     street_names = sorted(street_names, key=lambda x: first_streets[x], reverse=True)
+#     for street in street_names:
+#         print(f"{street} {int(intersection.counts[street]/this_gcd)}")
+
+print(len(intersections.items()))
+for i, intersection in intersections.items():
+    print(i)
+    print(len(intersection.counts.items()))
+    streets = sorted(intersection.counts.keys(), key=lambda x: intersection.counts[x])
+    for (i, street) in enumerate(streets):
+        print(f"{street} {int(i + 1)}")
 
 
 
